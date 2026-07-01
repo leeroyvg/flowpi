@@ -1,7 +1,7 @@
 import time
 from threading import Lock
 
-from config.config import ML_PER_PULSE, IDLE_TIMEOUT_SEC
+from config.config import ML_PER_PULSE, IDLE_TIMEOUT_SEC, FLOW_SPEED_SMOOTHING_ALPHA
 from backend.repository import insert_flow
 
 class FlowService:
@@ -12,6 +12,9 @@ class FlowService:
         self.pulse_count = 0
         self.last_count = 0
         self.last_pulse_time = 0
+        self.last_process_time = time.time()
+        self.flow_ml_s = 0.0
+        self.flow_l_min = 0.0
         self._lock = Lock()
 
     def register_pulse(self):
@@ -20,14 +23,26 @@ class FlowService:
             self.last_pulse_time = time.time()
 
     def process(self):
+        now = time.time()
+
         with self._lock:
             delta = self.pulse_count - self.last_count
             self.last_count = self.pulse_count
             last_pulse_time = self.last_pulse_time
             current_user = self.current_user
             tap_open = self.tap_open
+            last_process_time = self.last_process_time
+            self.last_process_time = now
 
-        now = time.time()
+        elapsed = max(now - last_process_time, 1e-6)
+        flow_ml_s_raw = (delta * ML_PER_PULSE) / elapsed if delta > 0 else 0.0
+        alpha = min(max(FLOW_SPEED_SMOOTHING_ALPHA, 0.0), 1.0)
+
+        with self._lock:
+            self.flow_ml_s = (alpha * flow_ml_s_raw) + ((1.0 - alpha) * self.flow_ml_s)
+            if self.flow_ml_s < 0.01:
+                self.flow_ml_s = 0.0
+            self.flow_l_min = (self.flow_ml_s * 60.0) / 1000.0
 
         # TAP OPEN
         if delta > 0 and not tap_open:
@@ -60,4 +75,6 @@ class FlowService:
             return {
                 "tap_open": self.tap_open,
                 "user": self.current_user,
+                "flow_ml_s": self.flow_ml_s,
+                "flow_l_min": self.flow_l_min,
             }

@@ -14,6 +14,9 @@ ML_PER_PULSE = float(os.getenv("FLOWPI_ML_PER_PULSE", "2.25"))
 # Timing
 IDLE_TIMEOUT_SEC = int(os.getenv("FLOWPI_IDLE_TIMEOUT_SEC", "5"))
 
+# Flow smoothing
+FLOW_SPEED_SMOOTHING_ALPHA = float(os.getenv("FLOWPI_FLOW_SPEED_ALPHA", "0.35"))
+
 # Database
 DB_PATH = str(Path(os.getenv("FLOWPI_DB_PATH", DATA_DIR / "flow.db")))
 

@@ -107,8 +107,12 @@ async function loadStatus() {
         );
 
         activeUserId = data.user;
+        const flowLMin = Number(data.flow_l_min || 0);
+        const flowMlS = Number(data.flow_ml_s || 0);
 
         setText("activeUser", "User " + activeUserId);
+        setText("flowSpeed", `${flowLMin.toFixed(2)} L/min`);
+        setText("flowSpeedMl", `${flowMlS.toFixed(2)} ml/s`);
         setText("apiStatus", "Connected");
     } catch (err) {
         showApiError("status", err);
