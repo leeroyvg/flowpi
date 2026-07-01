@@ -19,6 +19,12 @@ h1 {
     max-width: 600px;
 }
 
+.meta {
+    margin-top: 10px;
+    color: #9aa0a6;
+    font-size: 0.9rem;
+}
+
 button {
     padding: 8px 12px;
     margin: 5px;
@@ -53,6 +59,9 @@ button:hover {
     cursor: pointer;
     text-align: center;
     transition: 0.2s;
+    border: none;
+    width: 100%;
+    color: inherit;
 }
 
 .user-card.active {

@@ -1,0 +1,4 @@
+flowpi/data/*.db
+flowpi/backend/__pycache__/
+flowpi/config/__pycache__/
+flowpi/tests/__pycache__/

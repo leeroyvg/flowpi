@@ -1,10 +1,16 @@
 import sqlite3
+from pathlib import Path
+
 from config.config import DB_PATH
 
 def get_connection():
-    return sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 def init_db():
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+
     conn = get_connection()
     c = conn.cursor()
 
