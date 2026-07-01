@@ -1,19 +1,63 @@
-function resolveApiBase() {
-    const configuredBase = window.FLOWPI_API_BASE || localStorage.getItem("flowpi.apiBase");
-    if (configuredBase) {
-        return configuredBase.replace(/\/$/, "");
-    }
-
-    const { protocol, hostname, port } = window.location;
-
-    if (port === "5000") {
-        return `${protocol}//${hostname}:5000`;
-    }
-
-    return `${protocol}//${hostname}:5000`;
+function normalizeBase(base) {
+    return base.replace(/\/$/, "");
 }
 
-const API = resolveApiBase();
+function getApiCandidates() {
+    const params = new URLSearchParams(window.location.search);
+    const configuredBase = params.get("api") || window.FLOWPI_API_BASE || localStorage.getItem("flowpi.apiBase");
+    if (configuredBase) {
+        const normalized = normalizeBase(configuredBase);
+        localStorage.setItem("flowpi.apiBase", normalized);
+        return [normalized];
+    }
+
+    const candidates = [];
+    const { protocol, hostname, origin } = window.location;
+
+    if (protocol === "http:" || protocol === "https:") {
+        candidates.push(origin);
+
+        if (hostname) {
+            candidates.push(`${protocol}//${hostname}:5000`);
+        }
+    }
+
+    candidates.push("http://127.0.0.1:5000", "http://localhost:5000");
+
+    return [...new Set(candidates.map(normalizeBase))];
+}
+
+let apiBasePromise = null;
+
+async function resolveApiBase() {
+    if (apiBasePromise) {
+        return apiBasePromise;
+    }
+
+    apiBasePromise = (async () => {
+        const candidates = getApiCandidates();
+
+        for (const base of candidates) {
+            try {
+                const response = await fetch(`${base}/health`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (response.ok) {
+                    localStorage.setItem("flowpi.apiBase", base);
+                    setText("apiStatus", `Connected to ${base}`);
+                    return base;
+                }
+            } catch (error) {
+                console.debug("health probe failed", base, error);
+            }
+        }
+
+        throw new Error(`No backend reachable. Tried: ${candidates.join(", ")}`);
+    })();
+
+    return apiBasePromise;
+}
 
 let activeUserId = null;
 
@@ -27,7 +71,8 @@ function showApiError(context, error) {
 }
 
 async function fetchJson(path, options = {}) {
-    const res = await fetch(`${API}${path}`, {
+    const apiBase = await resolveApiBase();
+    const res = await fetch(`${apiBase}${path}`, {
         headers: {
             "Accept": "application/json",
             ...(options.headers || {})
