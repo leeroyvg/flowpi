@@ -71,6 +71,14 @@ async function resolveApiBase() {
 
 let activeUserId = null;
 
+function toLiters(ml) {
+    return Number(ml || 0) / 1000;
+}
+
+function formatLiters(ml) {
+    return `${toLiters(ml).toFixed(2)} L`;
+}
+
 function setText(id, value) {
     document.getElementById(id).innerText = value;
 }
@@ -108,11 +116,11 @@ async function loadStatus() {
 
         activeUserId = data.user;
         const flowLMin = Number(data.flow_l_min || 0);
-        const flowMlS = Number(data.flow_ml_s || 0);
+        const flowLS = Number(data.flow_ml_s || 0) / 1000;
 
         setText("activeUser", "User " + activeUserId);
         setText("flowSpeed", `${flowLMin.toFixed(2)} L/min`);
-        setText("flowSpeedMl", `${flowMlS.toFixed(2)} ml/s`);
+        setText("flowSpeedLs", `${flowLS.toFixed(2)} L/s`);
         setText("apiStatus", "Connected");
     } catch (err) {
         showApiError("status", err);
@@ -123,7 +131,7 @@ async function loadTotal() {
     try {
         const data = await fetchJson("/user_total");
 
-        setText("user_total", data.total_ml.toFixed(1) + " ml");
+        setText("user_total", formatLiters(data.total_ml));
     } catch (err) {
         showApiError("user_total", err);
     }
@@ -133,36 +141,68 @@ async function loadTotals() {
     const container = document.getElementById("user_totals");
     try {
         const data = await fetchJson("/user_totals");
+        const sortedUsers = [...data].sort((a, b) => Number(b.ml || 0) - Number(a.ml || 0));
 
-        container.innerHTML = "";
+        const previousPositions = new Map();
+        Array.from(container.children).forEach(card => {
+            previousPositions.set(card.dataset.userId, card.getBoundingClientRect());
+        });
 
-        data.forEach(u => {
-            const div = document.createElement("button");
-            div.className = "user-card";
-            div.type = "button";
+        sortedUsers.forEach(u => {
+            const key = String(u.id);
+            let card = container.querySelector(`.user-card[data-user-id="${key}"]`);
 
-            if (u.id === activeUserId) {
-                div.classList.add("active");
+            if (!card) {
+                card = document.createElement("button");
+                card.className = "user-card new-card";
+                card.type = "button";
+                card.dataset.userId = key;
+                card.onclick = async () => {
+                    try {
+                        await fetchJson(`/set_user/${u.id}`, { method: "POST" });
+                        await loadStatus();
+                        await loadTotals();
+                    } catch (err) {
+                        showApiError("set_user", err);
+                    }
+                };
             }
 
-            div.innerHTML = `
+            card.classList.toggle("active", u.id === activeUserId);
+            card.innerHTML = `
                 <div class="user-row">
                     <div class="user-name">${u.name}</div>
-                    <div class="user-ml">${u.ml.toFixed(1)} ml</div>
+                    <div class="user-volume">${formatLiters(u.ml)}</div>
                 </div>
             `;
 
-            div.onclick = async () => {
-                try {
-                    await fetchJson(`/set_user/${u.id}`, { method: "POST" });
-                    await loadStatus();
-                    await loadTotals();
-                } catch (err) {
-                    showApiError("set_user", err);
-                }
-            };
+            container.appendChild(card);
+        });
 
-            container.appendChild(div);
+        const validIds = new Set(sortedUsers.map(u => String(u.id)));
+        Array.from(container.children).forEach(card => {
+            if (!validIds.has(card.dataset.userId)) {
+                card.remove();
+            }
+        });
+
+        Array.from(container.children).forEach(card => {
+            const oldRect = previousPositions.get(card.dataset.userId);
+            if (!oldRect) {
+                setTimeout(() => card.classList.remove("new-card"), 250);
+                return;
+            }
+
+            const newRect = card.getBoundingClientRect();
+            const dx = oldRect.left - newRect.left;
+            const dy = oldRect.top - newRect.top;
+
+            if (dx || dy) {
+                card.style.transform = `translate(${dx}px, ${dy}px)`;
+                requestAnimationFrame(() => {
+                    card.style.transform = "";
+                });
+            }
         });
     } catch (err) {
         container.innerHTML = "";

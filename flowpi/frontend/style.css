@@ -58,10 +58,15 @@ button:hover {
     border-radius: 8px;
     cursor: pointer;
     text-align: center;
-    transition: 0.2s;
+    transition: transform 280ms ease, background-color 200ms ease, color 200ms ease;
     border: none;
     width: 100%;
     color: inherit;
+    will-change: transform;
+}
+
+.user-card.new-card {
+    animation: card-enter 240ms ease;
 }
 
 .user-card.active {
@@ -92,11 +97,22 @@ button:hover {
     text-align: center;
 }
 
-/* RIGHT SIDE = ML */
-.user-ml {
+/* RIGHT SIDE = VOLUME */
+.user-volume {
     background: #1976d2;   /* blauw */
     color: white;
     padding: 10px 12px;
     flex: 1;
     text-align: center;
+}
+
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
