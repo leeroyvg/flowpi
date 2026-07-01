@@ -70,6 +70,7 @@ async function resolveApiBase() {
 }
 
 let activeUserId = null;
+let sortMode = localStorage.getItem("flowpi.sortMode") || "ranking";
 
 function toLiters(ml) {
     return Number(ml || 0) / 1000;
@@ -86,6 +87,50 @@ function setText(id, value) {
 function showApiError(context, error) {
     console.error(context, error);
     setText("apiStatus", "Backend unavailable");
+}
+
+function applySortControlsState() {
+    const rankingBtn = document.getElementById("sortRankingBtn");
+    const nameBtn = document.getElementById("sortNameBtn");
+    if (!rankingBtn || !nameBtn) {
+        return;
+    }
+
+    const rankingActive = sortMode === "ranking";
+    rankingBtn.classList.toggle("active", rankingActive);
+    nameBtn.classList.toggle("active", !rankingActive);
+    rankingBtn.setAttribute("aria-pressed", String(rankingActive));
+    nameBtn.setAttribute("aria-pressed", String(!rankingActive));
+}
+
+function setupSortControls() {
+    const rankingBtn = document.getElementById("sortRankingBtn");
+    const nameBtn = document.getElementById("sortNameBtn");
+    if (!rankingBtn || !nameBtn) {
+        return;
+    }
+
+    rankingBtn.onclick = () => {
+        if (sortMode === "ranking") {
+            return;
+        }
+        sortMode = "ranking";
+        localStorage.setItem("flowpi.sortMode", sortMode);
+        applySortControlsState();
+        void loadTotals();
+    };
+
+    nameBtn.onclick = () => {
+        if (sortMode === "name") {
+            return;
+        }
+        sortMode = "name";
+        localStorage.setItem("flowpi.sortMode", sortMode);
+        applySortControlsState();
+        void loadTotals();
+    };
+
+    applySortControlsState();
 }
 
 async function fetchJson(path, options = {}) {
@@ -141,7 +186,12 @@ async function loadTotals() {
     const container = document.getElementById("user_totals");
     try {
         const data = await fetchJson("/user_totals");
-        const sortedUsers = [...data].sort((a, b) => Number(b.ml || 0) - Number(a.ml || 0));
+        const sortedUsers = [...data].sort((a, b) => {
+            if (sortMode === "name") {
+                return String(a.name || "").localeCompare(String(b.name || ""));
+            }
+            return Number(b.ml || 0) - Number(a.ml || 0);
+        });
 
         const previousPositions = new Map();
         Array.from(container.children).forEach(card => {
@@ -218,4 +268,5 @@ function refresh() {
 
 setInterval(refresh, 2000);
 
+setupSortControls();
 refresh();

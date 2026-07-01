@@ -25,6 +25,23 @@ h1 {
     font-size: 0.9rem;
 }
 
+.sort-controls {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0 14px;
+}
+
+.sort-btn {
+    margin: 0;
+    background: #2b2b2b;
+    color: #cfd8dc;
+}
+
+.sort-btn.active {
+    background: #00ff99;
+    color: #111;
+}
+
 button {
     padding: 8px 12px;
     margin: 5px;
