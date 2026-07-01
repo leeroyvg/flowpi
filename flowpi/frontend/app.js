@@ -4,21 +4,29 @@ function normalizeBase(base) {
 
 function getApiCandidates() {
     const params = new URLSearchParams(window.location.search);
-    const configuredBase = params.get("api") || window.FLOWPI_API_BASE || localStorage.getItem("flowpi.apiBase");
-    if (configuredBase) {
-        const normalized = normalizeBase(configuredBase);
-        localStorage.setItem("flowpi.apiBase", normalized);
-        return [normalized];
-    }
-
     const candidates = [];
-    const { protocol, hostname, origin } = window.location;
+    const configuredBase = params.get("api") || window.FLOWPI_API_BASE || localStorage.getItem("flowpi.apiBase");
+    const { protocol, hostname, origin, pathname } = window.location;
+
+    if (configuredBase) {
+        candidates.push(normalizeBase(configuredBase));
+    }
 
     if (protocol === "http:" || protocol === "https:") {
         candidates.push(origin);
+        candidates.push(`${origin}/app`);
+
+        const pathParts = pathname.split("/").filter(Boolean);
+        if (pathParts.length > 0) {
+            const parentPath = pathParts.slice(0, -1).join("/");
+            if (parentPath) {
+                candidates.push(`${origin}/${parentPath}`);
+            }
+        }
 
         if (hostname) {
             candidates.push(`${protocol}//${hostname}:5000`);
+            candidates.push(`${protocol}//${hostname}:5000/app`);
         }
     }
 
@@ -52,6 +60,8 @@ async function resolveApiBase() {
                 console.debug("health probe failed", base, error);
             }
         }
+
+        localStorage.removeItem("flowpi.apiBase");
 
         throw new Error(`No backend reachable. Tried: ${candidates.join(", ")}`);
     })();
