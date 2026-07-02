@@ -24,8 +24,14 @@ The backend reads these environment variables:
 - `FLOWPI_LOG_LEVEL`: logging level such as `INFO` or `DEBUG`.
 - `FLOWPI_ML_PER_PULSE`: flow calibration factor.
 - `FLOWPI_IDLE_TIMEOUT_SEC`: tap idle timeout in seconds.
+- `FLOWPI_ADMIN_TOKEN`: optional static fallback token for admin API calls.
+- `FLOWPI_ADMIN_USERNAME`: admin username for the login page.
+- `FLOWPI_ADMIN_PASSWORD`: admin password for the login page.
+- `FLOWPI_ADMIN_SESSION_TTL_SEC`: session duration in seconds. Defaults to `43200`.
 
 ## Local setup
+
+### macOS/Linux
 
 ```bash
 cd flowpi
@@ -36,7 +42,46 @@ export FLOWPI_ENABLE_GPIO=false
 python -m backend.app
 ```
 
+### Windows (PowerShell)
+
+```powershell
+cd flowpi
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:FLOWPI_ENABLE_GPIO = "false"
+$env:FLOWPI_ADMIN_USERNAME = "admin"
+$env:FLOWPI_ADMIN_PASSWORD = "change-me"
+python -m backend.app
+```
+
+Start backend and frontend together with the Windows launcher:
+
+```powershell
+cd flowpi
+.\run.ps1
+```
+
+Recommended: use `run.ps1` as the default startup command on Windows, because it sets the correct project Python path and avoids `ModuleNotFoundError`/stale backend process issues.
+
+If PowerShell blocks activation scripts, allow them for your user once:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
 Open the frontend by serving [flowpi/frontend/index.html](flowpi/frontend/index.html) from any static server on the same host, or configure `window.FLOWPI_API_BASE` before loading [flowpi/frontend/app.js](flowpi/frontend/app.js).
+
+Admin management page: [flowpi/frontend/admin.html](flowpi/frontend/admin.html)
+
+To edit volumes as admin in the UI:
+
+1. Set `FLOWPI_ADMIN_USERNAME` and `FLOWPI_ADMIN_PASSWORD` on the backend.
+2. Open `admin.html` from the frontend server.
+3. Sign in with username and password.
+4. Add new users with the `Add User` form.
+5. Update user names and totals in liters, then click `Save`.
+6. Remove users with `Delete`.
 
 ## Production start
 
