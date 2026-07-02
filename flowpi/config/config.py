@@ -35,3 +35,9 @@ ALLOWED_ORIGINS = [
 # Runtime
 ENABLE_GPIO = os.getenv("FLOWPI_ENABLE_GPIO", "true").lower() in {"1", "true", "yes", "on"}
 LOG_LEVEL = os.getenv("FLOWPI_LOG_LEVEL", "INFO").upper()
+
+# Admin
+ADMIN_TOKEN = os.getenv("FLOWPI_ADMIN_TOKEN", "")
+ADMIN_USERNAME = os.getenv("FLOWPI_ADMIN_USERNAME", "")
+ADMIN_PASSWORD = os.getenv("FLOWPI_ADMIN_PASSWORD", "")
+ADMIN_SESSION_TTL_SEC = int(os.getenv("FLOWPI_ADMIN_SESSION_TTL_SEC", "43200"))

@@ -49,6 +49,89 @@ def get_total():
     conn.close()
     return total
 
+
+def get_user_total(user_id):
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        SELECT COALESCE(SUM(ml), 0)
+        FROM flow
+        WHERE user_id = ?
+    """,
+        (user_id,),
+    )
+
+    total = c.fetchone()[0]
+    conn.close()
+    return total
+
+
+def adjust_user_total(user_id, delta_ml):
+    if float(delta_ml) == 0.0:
+        return
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        INSERT INTO flow (user_id, ml, event)
+        VALUES (?, ?, ?)
+    """,
+        (user_id, float(delta_ml), "ADMIN_ADJUST"),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def set_user_name(user_id, name):
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        UPDATE users
+        SET name = ?
+        WHERE id = ?
+    """,
+        (str(name), user_id),
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def create_user(name):
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        INSERT INTO users (name)
+        VALUES (?)
+    """,
+        (str(name),),
+    )
+
+    user_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return user_id
+
+
+def delete_user(user_id):
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("DELETE FROM flow WHERE user_id = ?", (user_id,))
+    c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+    conn.commit()
+    conn.close()
+
 def get_users():
     conn = get_connection()
     c = conn.cursor()

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowPi Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-orb orb-a" aria-hidden="true"></div>
+<div class="bg-orb orb-b" aria-hidden="true"></div>
+
+<main class="layout admin-layout">
+    <header class="hero card">
+        <div>
+            <p class="kicker">FlowPi Admin</p>
+            <h1>Administration</h1>
+            <p class="lead">Sign in to update per-user total volumes.</p>
+            <a class="admin-nav-link" href="index.html">Back To Dashboard</a>
+        </div>
+        <div id="adminStatus" class="pill" aria-live="polite">Checking session...</div>
+    </header>
+
+    <section id="loginCard" class="card admin-card" aria-label="Admin login">
+        <h2>Admin Login</h2>
+        <form id="loginForm" class="admin-form">
+            <label for="adminUsername">Username</label>
+            <input id="adminUsername" name="username" type="text" required autocomplete="username">
+
+            <label for="adminPassword">Password</label>
+            <input id="adminPassword" name="password" type="password" required autocomplete="current-password">
+
+            <button id="loginBtn" type="submit">Sign In</button>
+        </form>
+    </section>
+
+    <section id="editorCard" class="card admin-card hidden" aria-label="Volume editor">
+        <div class="leaderboard-head">
+            <h2>Manage Users</h2>
+            <button id="logoutBtn" type="button">Sign Out</button>
+        </div>
+        <form id="addUserForm" class="add-user-form">
+            <input id="newUserName" type="text" maxlength="40" placeholder="New user name" aria-label="New user name" required>
+            <button id="addUserBtn" type="submit">Add User</button>
+        </form>
+        <div id="adminUsers" class="admin-users"></div>
+    </section>
+</main>
+
+<script src="admin.js?v=2"></script>
+</body>
+</html>

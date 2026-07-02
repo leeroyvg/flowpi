@@ -2,44 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowPi Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>Flow Dashboard</h1>
+<div class="bg-orb orb-a" aria-hidden="true"></div>
+<div class="bg-orb orb-b" aria-hidden="true"></div>
 
-<div class="card">
-    <h2>Tap Status</h2>
-    <div id="tapStatus">...</div>
-    <div id="apiStatus" class="meta">Connecting...</div>
-</div>
+<main class="layout">
+    <header class="hero card">
+        <div>
+            <p class="kicker">FlowPi Monitor</p>
+            <h1>Flow Dashboard</h1>
+            <p class="lead">Realtime tap status, active user, and consumption insights.</p>
+            <a class="admin-nav-link" href="admin.html">Open Admin Page</a>
+        </div>
+        <div id="apiStatus" class="pill" aria-live="polite">Connecting...</div>
+    </header>
 
-<div class="card">
-    <h2>Active User</h2>
-    <div id="activeUser">...</div>
-</div>
+    <section class="metrics-grid" aria-label="Flow metrics">
+        <article class="card metric-card">
+            <h2>Tap Status</h2>
+            <div id="tapStatus" class="metric-value">...</div>
+        </article>
 
-<div class="card">
-    <h2>Current Flow Speed</h2>
-    <div id="flowSpeed">0.00 L/min</div>
-    <div id="flowSpeedLs" class="meta">0.00 L/s</div>
-</div>
+        <article class="card metric-card">
+            <h2>Active User</h2>
+            <div id="activeUser" class="metric-value">...</div>
+        </article>
 
-<div class="card">
-    <h2>Total Beer Volume</h2>
-    <div id="user_total">...</div>
-</div>
+        <article class="card metric-card">
+            <h2>Current Flow</h2>
+            <div id="flowSpeed" class="metric-value">0.00 L/min</div>
+            <div id="flowSpeedLs" class="metric-sub">0.00 L/s</div>
+        </article>
 
-<div class="card">
-    <h2>Total Beer Volume per User</h2>
-    <div class="sort-controls" id="sortControls" role="group" aria-label="Sort users">
-        <button id="sortRankingBtn" class="sort-btn" type="button">Ranking</button>
-        <button id="sortNameBtn" class="sort-btn" type="button">Name</button>
-    </div>
-    <div id="user_totals" class="user-grid"></div>
-</div>
+        <article class="card metric-card">
+            <h2>Total Volume</h2>
+            <div id="user_total" class="metric-value">...</div>
+        </article>
+    </section>
+
+    <section class="card leaderboard" aria-label="User totals">
+        <div class="leaderboard-head">
+            <h2>Total Volume per User</h2>
+            <div class="sort-controls" id="sortControls" role="group" aria-label="Sort users">
+                <button id="sortRankingBtn" class="sort-btn" type="button">Ranking</button>
+                <button id="sortNameBtn" class="sort-btn" type="button">Name</button>
+            </div>
+        </div>
+        <div id="user_totals" class="user-grid"></div>
+    </section>
+</main>
 
 <script src="app.js"></script>
 

@@ -203,10 +203,11 @@ async function loadTotals() {
             let card = container.querySelector(`.user-card[data-user-id="${key}"]`);
 
             if (!card) {
-                card = document.createElement("button");
+                card = document.createElement("div");
                 card.className = "user-card new-card";
-                card.type = "button";
                 card.dataset.userId = key;
+                card.setAttribute("role", "button");
+                card.tabIndex = 0;
                 card.onclick = async () => {
                     try {
                         await fetchJson(`/set_user/${u.id}`, { method: "POST" });
@@ -215,6 +216,13 @@ async function loadTotals() {
                     } catch (err) {
                         showApiError("set_user", err);
                     }
+                };
+                card.onkeydown = async (event) => {
+                    if (event.key !== "Enter" && event.key !== " ") {
+                        return;
+                    }
+                    event.preventDefault();
+                    card.click();
                 };
             }
 
