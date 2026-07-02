@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowPi Statistics</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-orb orb-a" aria-hidden="true"></div>
+<div class="bg-orb orb-b" aria-hidden="true"></div>
+
+<main class="layout stats-layout">
+    <header class="hero card">
+        <div>
+            <p class="kicker">FlowPi Insights</p>
+            <h1>Usage Statistics</h1>
+            <p class="lead">Live snapshots of totals, distribution, and consumption highlights.</p>
+            <div class="hero-links">
+                <a class="admin-nav-link" href="index.html">Dashboard</a>
+                <a class="admin-nav-link active" href="stats.html" aria-current="page">Statistics</a>
+                <a class="admin-nav-link secondary" href="admin.html">Admin</a>
+            </div>
+        </div>
+        <div id="statsStatus" class="pill" aria-live="polite">Connecting...</div>
+    </header>
+
+    <section class="stats-cards" aria-label="Statistics overview">
+        <article class="card metric-card">
+            <h2>Tap State</h2>
+            <div id="statsTap" class="metric-value">...</div>
+            <div id="statsActiveUser" class="metric-sub">Active user: -</div>
+        </article>
+        <article class="card metric-card">
+            <h2>Average per Tap</h2>
+            <div id="statsAvgTap" class="metric-value">0.00 L</div>
+            <div id="statsTapCount" class="metric-sub">0 taps</div>
+        </article>
+        <article class="card metric-card">
+            <h2>Total Consumption</h2>
+            <div id="statsTotal" class="metric-value">0.00 L</div>
+            <div class="metric-sub">All users combined</div>
+        </article>
+        <article class="card metric-card">
+            <h2>Average Per User</h2>
+            <div id="statsAverage" class="metric-value">0.00 L</div>
+            <div id="statsUserCount" class="metric-sub">0 users</div>
+        </article>
+    </section>
+
+    <section class="card stats-section stats-highlights-section" aria-label="Consumption highlights">
+        <h2>Highlights</h2>
+        <div class="stats-highlights">
+            <div class="stats-highlight-chip" id="highlightTop">Top user: -</div>
+            <div class="stats-highlight-chip" id="highlightClose">Closest race: -</div>
+            <div class="stats-highlight-chip" id="highlightSpread">Spread: -</div>
+            <div class="stats-highlight-chip" id="highlightAvgTap">Average per tap: -</div>
+            <div class="stats-highlight-chip" id="highlightPulse">Flow pulse: -</div>
+        </div>
+    </section>
+
+    <section class="card stats-section stats-distribution-section" aria-label="Volume distribution per user">
+        <div class="leaderboard-head">
+            <h2>User Distribution</h2>
+            <div id="statsUpdatedAt" class="metric-sub">Waiting for data...</div>
+        </div>
+        <div id="statsRows" class="stats-rows"></div>
+    </section>
+</main>
+
+<script src="stats.js?v=3"></script>
+</body>
+</html>

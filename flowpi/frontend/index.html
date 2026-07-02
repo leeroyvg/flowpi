@@ -12,13 +12,17 @@
 <div class="bg-orb orb-a" aria-hidden="true"></div>
 <div class="bg-orb orb-b" aria-hidden="true"></div>
 
-<main class="layout">
+<main class="layout dashboard-layout">
     <header class="hero card">
         <div>
             <p class="kicker">FlowPi Monitor</p>
             <h1>Flow Dashboard</h1>
             <p class="lead">Realtime tap status, active user, and consumption insights.</p>
-            <a class="admin-nav-link" href="admin.html">Open Admin Page</a>
+            <div class="hero-links">
+                <a class="admin-nav-link active" href="index.html" aria-current="page">Dashboard</a>
+                <a class="admin-nav-link" href="stats.html">Statistics</a>
+                <a class="admin-nav-link secondary" href="admin.html">Admin</a>
+            </div>
         </div>
         <div id="apiStatus" class="pill" aria-live="polite">Connecting...</div>
     </header>
@@ -55,6 +59,13 @@
             </div>
         </div>
         <div id="user_totals" class="user-grid"></div>
+    </section>
+
+    <section class="card tap-history" aria-label="Recent tap sessions">
+        <div class="leaderboard-head">
+            <h2>Recent Taps (Open/Close)</h2>
+        </div>
+        <div id="tapSessions" class="tap-sessions"></div>
     </section>
 </main>
 

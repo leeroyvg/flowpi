@@ -138,7 +138,7 @@ function renderUsers(users) {
         const row = document.createElement("div");
         row.className = "admin-user-row";
         row.innerHTML = `
-            <input class="admin-name-input" type="text" maxlength="40" value="${String(user.name || "").replace(/"/g, "&quot;")}" aria-label="Name for user ${user.id}">
+            <input class="admin-name-input" type="text" maxlength="40" value="${String(user.name || "").replace(/"/g, "&quot;")}" aria-label="Name for ${user.name || "Unknown user"}">
             <div class="admin-user-input-wrap">
                 <input class="admin-volume-input" type="number" min="0" step="0.01" value="${(Number(user.ml || 0) / 1000).toFixed(2)}" aria-label="Volume in liters for ${user.name}">
                 <span class="admin-unit">L</span>

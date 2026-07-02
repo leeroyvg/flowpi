@@ -31,12 +31,5 @@ def init_db():
     )
     """)
 
-    # default users
-    for i in range(1, 11):
-        c.execute(
-            "INSERT OR IGNORE INTO users (id, name) VALUES (?, ?)",
-            (i, f"User {i}")
-        )
-
     conn.commit()
     conn.close()

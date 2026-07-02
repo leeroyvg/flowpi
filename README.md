@@ -73,6 +73,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Open the frontend by serving [flowpi/frontend/index.html](flowpi/frontend/index.html) from any static server on the same host, or configure `window.FLOWPI_API_BASE` before loading [flowpi/frontend/app.js](flowpi/frontend/app.js).
 
 Admin management page: [flowpi/frontend/admin.html](flowpi/frontend/admin.html)
+Statistics page: [flowpi/frontend/stats.html](flowpi/frontend/stats.html)
 
 To edit volumes as admin in the UI:
 

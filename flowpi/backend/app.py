@@ -27,6 +27,8 @@ from backend.repository import (
     adjust_user_total,
     create_user,
     delete_user,
+    get_recent_tap_sessions,
+    get_tap_stats,
     get_total,
     get_total_per_user,
     get_user_total,
@@ -65,6 +67,16 @@ def create_app():
     app.config["FLOW_SERVICE"] = service
     app.config["GPIO_SERVICE"] = gpio
     app.config["STOP_EVENT"] = stop_event
+
+    def find_user_name(user_id):
+        if user_id is None:
+            return None
+
+        for user in get_users():
+            if user["id"] == user_id:
+                return user["name"]
+
+        return None
 
     def cleanup_admin_sessions(now=None):
         now = now or time.time()
@@ -155,6 +167,14 @@ def create_app():
             "total_ml": get_total()
         })
 
+    @app.get("/tap_stats")
+    def tap_stats():
+        return jsonify(get_tap_stats())
+
+    @app.get("/tap_sessions")
+    def tap_sessions():
+        return jsonify(get_recent_tap_sessions(limit=8))
+
     @app.get("/users")
     def users():
         return jsonify(get_users())
@@ -167,7 +187,8 @@ def create_app():
 
         service.set_user(user_id)
         return jsonify({
-            "active_user": user_id
+            "active_user": user_id,
+            "active_user_name": find_user_name(user_id),
         })
 
     @app.post("/admin/users/<int:user_id>/volume")
@@ -198,6 +219,7 @@ def create_app():
 
         return jsonify({
             "user_id": user_id,
+            "user_name": find_user_name(user_id),
             "previous_total_ml": current_total_ml,
             "total_ml": target_total_ml,
             "delta_ml": delta_ml,
@@ -225,6 +247,7 @@ def create_app():
 
         return jsonify({
             "user_id": user_id,
+            "user_name": name,
             "name": name,
         })
 
@@ -243,7 +266,7 @@ def create_app():
             return jsonify({"error": "name is too long (max 40)"}), 400
 
         user_id = create_user(name)
-        return jsonify({"id": user_id, "name": name}), 201
+        return jsonify({"id": user_id, "name": name, "user_name": name}), 201
 
     @app.delete("/admin/users/<int:user_id>")
     def admin_delete_user(user_id):
@@ -251,6 +274,7 @@ def create_app():
             return jsonify({"error": "Forbidden"}), 403
 
         users = get_users()
+        deleted_user_name = next((user["name"] for user in users if user["id"] == user_id), None)
         valid_user_ids = [user["id"] for user in users]
         if user_id not in valid_user_ids:
             return jsonify({"error": "Unknown user"}), 404
@@ -268,12 +292,18 @@ def create_app():
 
         return jsonify({
             "deleted_user_id": user_id,
+            "deleted_user_name": deleted_user_name,
             "switched_to": switched_to,
+            "switched_to_name": find_user_name(switched_to),
         })
 
     @app.get("/status")
     def status():
-        return jsonify(service.get_status())
+        current = service.get_status()
+        return jsonify({
+            **current,
+            "user_name": find_user_name(current.get("user")),
+        })
 
     if ENABLE_GPIO:
         gpio.setup()

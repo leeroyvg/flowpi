@@ -50,6 +50,33 @@ def get_total():
     return total
 
 
+def get_tap_stats():
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        SELECT
+            COALESCE(SUM(CASE WHEN event = 'FLOW' THEN ml ELSE 0 END), 0) AS total_flow_ml,
+            COALESCE(SUM(CASE WHEN event = 'TAP_OPEN' THEN 1 ELSE 0 END), 0) AS tap_count
+        FROM flow
+    """
+    )
+
+    row = c.fetchone()
+    conn.close()
+
+    total_flow_ml = float(row[0] or 0)
+    tap_count = int(row[1] or 0)
+    average_ml = (total_flow_ml / tap_count) if tap_count > 0 else 0.0
+
+    return {
+        "total_flow_ml": total_flow_ml,
+        "tap_count": tap_count,
+        "avg_ml_per_tap": average_ml,
+    }
+
+
 def get_user_total(user_id):
     conn = get_connection()
     c = conn.cursor()
@@ -142,3 +169,54 @@ def get_users():
     conn.close()
 
     return [{"id": r[0], "name": r[1]} for r in rows]
+
+
+def get_recent_tap_sessions(limit=8):
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        SELECT f.id, f.user_id, f.ml, f.event, f.timestamp, u.name
+        FROM flow f
+        LEFT JOIN users u ON u.id = f.user_id
+        WHERE f.event IN ('TAP_OPEN', 'FLOW', 'TAP_CLOSE')
+        ORDER BY f.id ASC
+    """
+    )
+
+    rows = c.fetchall()
+    conn.close()
+
+    sessions = []
+    current = None
+
+    for _, user_id, ml, event, timestamp, user_name in rows:
+        if event == "TAP_OPEN":
+            current = {
+                "user_id": user_id,
+                "user_name": user_name or "Unknown user",
+                "total_ml": 0.0,
+                "opened_at": timestamp,
+                "closed_at": None,
+                "state": "open",
+            }
+            continue
+
+        if not current:
+            continue
+
+        if event == "FLOW":
+            current["total_ml"] += float(ml or 0)
+            continue
+
+        if event == "TAP_CLOSE":
+            current["closed_at"] = timestamp
+            current["state"] = "closed"
+            sessions.append(current)
+            current = None
+
+    if current:
+        sessions.append(current)
+
+    return list(reversed(sessions[-max(int(limit), 1):]))

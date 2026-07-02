@@ -71,6 +71,14 @@ async function resolveApiBase() {
 
 let activeUserId = null;
 let sortMode = localStorage.getItem("flowpi.sortMode") || "ranking";
+const userNamesById = new Map();
+
+function getUserNameById(userId) {
+    if (userId === null || userId === undefined || userId === "") {
+        return "-";
+    }
+    return userNamesById.get(String(userId)) || "Unknown user";
+}
 
 function toLiters(ml) {
     return Number(ml || 0) / 1000;
@@ -156,14 +164,15 @@ async function loadStatus() {
 
         setText(
             "tapStatus",
-            data.tap_open ? "🟢 TAP OPEN" : "🔴 TAP CLOSED"
+            data.tap_open ? "🟢 Tap open" : "🔴 Tap closed"
         );
 
         activeUserId = data.user;
         const flowLMin = Number(data.flow_l_min || 0);
         const flowLS = Number(data.flow_ml_s || 0) / 1000;
+        const activeUserName = getUserNameById(activeUserId);
 
-        setText("activeUser", "User " + activeUserId);
+        setText("activeUser", activeUserName);
         setText("flowSpeed", `${flowLMin.toFixed(2)} L/min`);
         setText("flowSpeedLs", `${flowLS.toFixed(2)} L/s`);
         setText("apiStatus", "Connected");
@@ -186,6 +195,39 @@ async function loadTotals() {
     const container = document.getElementById("user_totals");
     try {
         const data = await fetchJson("/user_totals");
+
+        userNamesById.clear();
+        data.forEach(u => {
+            userNamesById.set(String(u.id), String(u.name || "Unknown user"));
+        });
+
+        if (activeUserId !== null && activeUserId !== undefined) {
+            const activeUserName = getUserNameById(activeUserId);
+            setText("activeUser", activeUserName);
+        }
+
+        const byVolume = [...data].sort((a, b) => {
+            const diff = Number(b.ml || 0) - Number(a.ml || 0);
+            if (diff !== 0) {
+                return diff;
+            }
+            return Number(a.id || 0) - Number(b.id || 0);
+        });
+
+        const volumeRanks = new Map();
+        let previousRankKey = null;
+        let rank = 0;
+
+        byVolume.forEach((u, idx) => {
+            const currentMl = Number(u.ml || 0);
+            const rankKey = formatLiters(currentMl);
+            if (previousRankKey === null || rankKey !== previousRankKey) {
+                rank = idx + 1;
+                previousRankKey = rankKey;
+            }
+            volumeRanks.set(String(u.id), rank);
+        });
+
         const sortedUsers = [...data].sort((a, b) => {
             if (sortMode === "name") {
                 return String(a.name || "").localeCompare(String(b.name || ""));
@@ -198,8 +240,9 @@ async function loadTotals() {
             previousPositions.set(card.dataset.userId, card.getBoundingClientRect());
         });
 
-        sortedUsers.forEach(u => {
+        sortedUsers.forEach((u) => {
             const key = String(u.id);
+            const rankByVolume = volumeRanks.get(key) || 0;
             let card = container.querySelector(`.user-card[data-user-id="${key}"]`);
 
             if (!card) {
@@ -229,7 +272,7 @@ async function loadTotals() {
             card.classList.toggle("active", u.id === activeUserId);
             card.innerHTML = `
                 <div class="user-row">
-                    <div class="user-name">${u.name}</div>
+                    <div class="user-name"><span class="user-rank">#${rankByVolume}</span><span>${u.name || "Unknown user"}</span></div>
                     <div class="user-volume">${formatLiters(u.ml)}</div>
                 </div>
             `;
@@ -268,10 +311,58 @@ async function loadTotals() {
     }
 }
 
+function formatSessionTime(timestamp) {
+    if (!timestamp) {
+        return "in progress";
+    }
+
+    const normalized = String(timestamp).replace(" ", "T");
+    const dt = new Date(normalized);
+    if (Number.isNaN(dt.getTime())) {
+        return timestamp;
+    }
+    return dt.toLocaleTimeString();
+}
+
+async function loadTapSessions() {
+    const container = document.getElementById("tapSessions");
+    if (!container) {
+        return;
+    }
+
+    try {
+        const sessions = await fetchJson("/tap_sessions");
+        if (!Array.isArray(sessions) || sessions.length === 0) {
+            container.innerHTML = '<div class="tap-session-item muted">No tap sessions yet.</div>';
+            return;
+        }
+
+        container.innerHTML = sessions
+            .map((session) => {
+                const state = session.state === "closed" ? "Closed" : "Open";
+                const stateClass = session.state === "closed" ? "is-closed" : "is-open";
+                const liters = (Number(session.total_ml || 0) / 1000).toFixed(2);
+                const stamp = formatSessionTime(session.closed_at || session.opened_at);
+                const userName = String(session.user_name || getUserNameById(session.user_id));
+                return `
+                    <div class="tap-session-item ${stateClass}">
+                        <div class="tap-session-main">${userName} • ${liters} L</div>
+                        <div class="tap-session-meta">${state} • ${stamp}</div>
+                    </div>
+                `;
+            })
+            .join("");
+    } catch (err) {
+        container.innerHTML = '<div class="tap-session-item muted">Unable to load tap sessions.</div>';
+        console.error("tap_sessions", err);
+    }
+}
+
 function refresh() {
     void loadStatus();
     void loadTotal();
     void loadTotals();
+    void loadTapSessions();
 }
 
 setInterval(refresh, 2000);
