@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowPi Admin</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <div class="bg-orb orb-a" aria-hidden="true"></div>
@@ -36,21 +36,55 @@
 
             <button id="loginBtn" type="submit">Sign In</button>
         </form>
-    </section>
 
-    <section id="editorCard" class="card admin-card hidden" aria-label="Volume editor">
-        <div class="leaderboard-head">
-            <h2>Manage Users</h2>
+        <div id="adminSessionCard" class="admin-session-card hidden" aria-live="polite">
+            <p class="metric-sub">Signed in as admin.</p>
             <button id="logoutBtn" type="button">Sign Out</button>
         </div>
-        <form id="addUserForm" class="add-user-form">
-            <input id="newUserName" type="text" maxlength="40" placeholder="New user name" aria-label="New user name" required>
-            <button id="addUserBtn" type="submit">Add User</button>
-        </form>
-        <div id="adminUsers" class="admin-users"></div>
+    </section>
+
+    <section id="editorCard" class="admin-editor" aria-label="Volume editor">
+        <div class="admin-editor-grid">
+            <section class="card admin-panel-card admin-logs-section" aria-label="Flow event logs">
+                <div class="leaderboard-head admin-logs-head">
+                    <h2>Flow Event Logs</h2>
+                    <div class="admin-logs-actions">
+                        <button id="refreshLogsBtn" type="button">Refresh Logs</button>
+                    </div>
+                </div>
+
+                <div class="admin-logs-wrap">
+                    <table class="admin-logs-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Event</th>
+                            <th>Volume</th>
+                        </tr>
+                        </thead>
+                        <tbody id="adminFlowLogsBody">
+                        <tr>
+                            <td colspan="5" class="metric-sub">No logs loaded yet.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card admin-panel-card admin-users-section" aria-label="Manage users">
+                <h2>Manage Users</h2>
+                <form id="addUserForm" class="add-user-form">
+                    <input id="newUserName" type="text" maxlength="40" placeholder="New user name" aria-label="New user name" required>
+                    <button id="addUserBtn" type="submit">Add User</button>
+                </form>
+                <div id="adminUsers" class="admin-users"></div>
+            </section>
+        </div>
     </section>
 </main>
 
-<script src="admin.js?v=2"></script>
+<script src="admin.js?v=6"></script>
 </body>
 </html>

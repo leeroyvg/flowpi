@@ -17,11 +17,14 @@ The backend reads these environment variables:
 
 - `FLOWPI_DB_PATH`: SQLite database file path. Defaults to `flowpi/data/flow.db`.
 - `FLOWPI_DATA_DIR`: base data directory when `FLOWPI_DB_PATH` is not set.
+- `FLOWPI_ENV`: runtime environment marker (`development` or `production`).
 - `FLOWPI_ENABLE_GPIO`: `true` or `false`. Disable for local development and testing.
-- `FLOWPI_ALLOWED_ORIGINS`: comma-separated CORS allowlist. Use an explicit allowlist in production instead of `*`.
+- `FLOWPI_ALLOWED_ORIGINS`: comma-separated CORS allowlist.
 - `FLOWPI_HOST`: bind host. Defaults to `0.0.0.0`.
 - `FLOWPI_PORT`: API port. Defaults to `5000`.
 - `FLOWPI_LOG_LEVEL`: logging level such as `INFO` or `DEBUG`.
+- `FLOWPI_TRUST_PROXY`: trust `X-Forwarded-*` headers from a reverse proxy.
+- `FLOWPI_MAX_REQUEST_BYTES`: max request payload size in bytes.
 - `FLOWPI_ML_PER_PULSE`: flow calibration factor.
 - `FLOWPI_IDLE_TIMEOUT_SEC`: tap idle timeout in seconds.
 - `FLOWPI_ADMIN_TOKEN`: optional static fallback token for admin API calls.
@@ -95,6 +98,35 @@ FLOWPI_ALLOWED_ORIGINS=http://<pi-ip>:8000 ./run.sh
 ```
 
 The launcher uses `waitress-serve` for the backend and `python3 -m http.server` for the frontend.
+
+## Production hardening checklist
+
+- Use strong secrets for `FLOWPI_ADMIN_PASSWORD` and optionally `FLOWPI_ADMIN_TOKEN`.
+- Restrict `FLOWPI_ALLOWED_ORIGINS` to your frontend host(s), never `*` in production.
+- Keep `FLOWPI_DEBUG=false` in production.
+- If deployed behind Nginx/Caddy/Traefik, set `FLOWPI_TRUST_PROXY=true`.
+- Persist `flowpi/data` on durable storage and include it in your backups.
+- Monitor `/health` for liveness and `/ready` for readiness.
+
+## Docker deployment
+
+The project now includes a production container setup:
+
+1. Copy `.env.example` to `.env` inside `flowpi/`.
+2. Update credentials and origin allowlist in `.env`.
+3. Start with Docker Compose:
+
+```bash
+cd flowpi
+docker compose up -d --build
+```
+
+This starts:
+
+- backend on `http://localhost:5000`
+- frontend on `http://localhost:8000`
+
+Data is persisted via the `./data:/app/data` volume mapping.
 
 ## Validation
 

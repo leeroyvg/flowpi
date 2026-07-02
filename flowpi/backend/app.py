@@ -4,6 +4,8 @@ import logging
 import secrets
 from flask_cors import CORS
 from flask import Flask, jsonify, request
+from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import threading
 import time
@@ -15,18 +17,22 @@ from config.config import (
     ADMIN_USERNAME,
     ALLOWED_ORIGINS,
     DEBUG,
+    ENV,
     ENABLE_GPIO,
     HOST,
     LOG_LEVEL,
+    MAX_REQUEST_BYTES,
     PORT,
+    TRUST_PROXY,
 )
 from backend.flow_service import FlowService
 from backend.gpio import GPIOService
-from backend.db import init_db
+from backend.db import get_connection, init_db
 from backend.repository import (
     adjust_user_total,
     create_user,
     delete_user,
+    get_flow_events,
     get_recent_tap_sessions,
     get_tap_stats,
     get_total,
@@ -56,7 +62,32 @@ def create_app():
     init_db()
 
     app = Flask(__name__)
-    CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS or ["*"]}})
+    app.config["MAX_CONTENT_LENGTH"] = max(1024, MAX_REQUEST_BYTES)
+    app.config["JSON_SORT_KEYS"] = False
+
+    if TRUST_PROXY:
+        # Respect X-Forwarded-* headers when running behind a trusted reverse proxy.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
+    CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
+
+    @app.after_request
+    def apply_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        response.headers.setdefault("Cache-Control", "no-store")
+        return response
+
+    @app.errorhandler(HTTPException)
+    def handle_http_error(exc):
+        return jsonify({"error": exc.name, "message": exc.description}), exc.code
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(exc):
+        LOGGER.exception("Unhandled server error")
+        message = str(exc) if DEBUG else "Internal server error"
+        return jsonify({"error": "InternalServerError", "message": message}), 500
 
     service = FlowService()
     gpio = GPIOService(service)
@@ -116,9 +147,20 @@ def create_app():
     def health():
         return jsonify({
             "status": "ok",
+            "env": ENV,
             "gpio_enabled": gpio.enabled,
             "admin_login_enabled": bool(ADMIN_USERNAME and ADMIN_PASSWORD),
         })
+
+    @app.get("/ready")
+    def ready():
+        conn = get_connection()
+        try:
+            conn.execute("SELECT 1")
+        finally:
+            conn.close()
+
+        return jsonify({"status": "ready"})
 
     @app.post("/admin/login")
     def admin_login():
@@ -178,6 +220,29 @@ def create_app():
     @app.get("/users")
     def users():
         return jsonify(get_users())
+
+    @app.get("/flow_events")
+    def flow_events():
+        raw_limit = request.args.get("limit", "100")
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            return jsonify({"error": "limit must be an integer"}), 400
+
+        return jsonify(get_flow_events(limit=limit))
+
+    @app.get("/admin/flow_events")
+    def admin_flow_events():
+        if not is_admin_authorized():
+            return jsonify({"error": "Forbidden"}), 403
+
+        raw_limit = request.args.get("limit", "100")
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            return jsonify({"error": "limit must be an integer"}), 400
+
+        return jsonify(get_flow_events(limit=limit))
 
     @app.post("/set_user/<int:user_id>")
     def set_user(user_id):

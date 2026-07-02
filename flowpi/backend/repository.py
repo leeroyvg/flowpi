@@ -171,6 +171,39 @@ def get_users():
     return [{"id": r[0], "name": r[1]} for r in rows]
 
 
+def get_flow_events(limit=100):
+    safe_limit = max(1, min(int(limit), 500))
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        SELECT f.id, f.user_id, u.name, f.ml, f.event, f.timestamp
+        FROM flow f
+        LEFT JOIN users u ON u.id = f.user_id
+        ORDER BY f.id DESC
+        LIMIT ?
+    """,
+        (safe_limit,),
+    )
+
+    rows = c.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": r[0],
+            "user_id": r[1],
+            "user_name": r[2] or "Unknown user",
+            "ml": float(r[3] or 0),
+            "event": r[4],
+            "timestamp": r[5],
+        }
+        for r in rows
+    ]
+
+
 def get_recent_tap_sessions(limit=8):
     conn = get_connection()
     c = conn.cursor()

@@ -305,7 +305,7 @@ button:focus-visible {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .admin-layout {
@@ -317,9 +317,40 @@ button:focus-visible {
 }
 
 #editorCard {
-    min-height: min(78vh, 900px);
+    min-height: min(72vh, 840px);
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 12px;
+}
+
+.admin-editor {
+    animation: fade-up 520ms ease;
+}
+
+.admin-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: 0;
+}
+
+.admin-users-section,
+.admin-logs-section {
+    min-height: 0;
+}
+
+.admin-panel-card {
+    padding: 12px;
+}
+
+.admin-users-section h2 {
+    margin-bottom: 10px;
+}
+
+.admin-session-card {
+    margin-top: 8px;
+    display: grid;
+    gap: 8px;
 }
 
 .admin-form {
@@ -357,7 +388,7 @@ button:focus-visible {
 .admin-users {
     display: grid;
     gap: 10px;
-    max-height: none;
+    max-height: 360px;
     min-height: 320px;
     height: 100%;
     overflow: auto;
@@ -429,6 +460,49 @@ button:focus-visible {
 
 .admin-delete-btn:hover {
     background: #efc9d0;
+}
+
+.admin-logs-head {
+    margin-bottom: 10px;
+}
+
+.admin-logs-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-logs-wrap {
+    max-height: 520px;
+    overflow: auto;
+    border: 1px solid #dce7f3;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.admin-logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.admin-logs-table th,
+.admin-logs-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #edf3fa;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.admin-logs-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f3f8ff;
+    color: var(--text-soft);
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .tap-history {
@@ -599,7 +673,7 @@ button:focus-visible {
 
 @media (min-width: 980px) {
     .layout {
-        grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.25fr);
+        grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
         align-items: start;
     }
 
@@ -641,21 +715,42 @@ button:focus-visible {
     }
 
     .layout.admin-layout {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
     }
 
     .layout.admin-layout .hero {
         grid-column: 1;
     }
 
-    .layout.admin-layout #loginCard,
-    .layout.admin-layout #editorCard {
+    .layout.admin-layout #loginCard {
         grid-column: 2;
         margin-top: -8px;
     }
 
+    .layout.admin-layout #editorCard {
+        grid-column: 1 / -1;
+        margin-top: 4px;
+    }
+
+    .admin-editor-grid {
+        grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
+        align-items: start;
+    }
+
+    .admin-logs-section {
+        grid-column: 1;
+    }
+
+    .admin-users-section {
+        grid-column: 2;
+    }
+
+    .admin-users {
+        max-height: 520px;
+    }
+
     .layout.stats-layout {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
         align-items: start;
     }
 
@@ -716,6 +811,10 @@ button:focus-visible {
     }
 
     .admin-user-row {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-editor-grid {
         grid-template-columns: 1fr;
     }
 

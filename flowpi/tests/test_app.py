@@ -35,6 +35,20 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "ok")
 
+    def test_ready_endpoint(self):
+        response = self.client.get("/ready")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["status"], "ready")
+
+    def test_security_headers_present(self):
+        response = self.client.get("/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(response.headers.get("X-Frame-Options"), "DENY")
+        self.assertEqual(response.headers.get("Referrer-Policy"), "no-referrer")
+
     def test_rejects_unknown_user(self):
         response = self.client.post("/set_user/999")
 
@@ -204,6 +218,42 @@ class AppTestCase(unittest.TestCase):
 
         self.assertTrue(any(item["user_id"] == self.user2_id and item["state"] == "closed" and abs(float(item["total_ml"]) - 400.0) < 1e-6 for item in body))
         self.assertTrue(any(item["user_id"] == self.user3_id and item["state"] == "closed" and abs(float(item["total_ml"]) - 500.0) < 1e-6 for item in body))
+
+    def test_admin_flow_events_requires_auth(self):
+        response = self.client.get("/admin/flow_events")
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_flow_events_returns_logs(self):
+        from backend.repository import insert_flow
+
+        insert_flow(self.user1_id, 0, "TAP_OPEN")
+        insert_flow(self.user1_id, 250, "FLOW")
+
+        response = self.client.get(
+            "/admin/flow_events?limit=5",
+            headers={"X-Admin-Token": "secret-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertTrue(isinstance(body, list))
+        self.assertGreaterEqual(len(body), 1)
+        self.assertTrue(any(item["event"] in {"TAP_OPEN", "FLOW"} for item in body))
+        self.assertTrue(any(item["user_id"] == self.user1_id and item["user_name"] == "User 1" for item in body))
+
+    def test_public_flow_events_returns_logs_without_auth(self):
+        from backend.repository import insert_flow
+
+        insert_flow(self.user1_id, 0, "TAP_OPEN")
+        insert_flow(self.user1_id, 300, "FLOW")
+
+        response = self.client.get("/flow_events?limit=5")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertTrue(isinstance(body, list))
+        self.assertGreaterEqual(len(body), 1)
+        self.assertTrue(any(item["event"] in {"TAP_OPEN", "FLOW"} for item in body))
 
 
 if __name__ == "__main__":

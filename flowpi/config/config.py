@@ -2,6 +2,12 @@ import os
 from pathlib import Path
 
 
+def _as_bool(value, default=False):
+	if value is None:
+		return default
+	return str(value).lower() in {"1", "true", "yes", "on"}
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("FLOWPI_DATA_DIR", BASE_DIR / "data"))
 
@@ -23,17 +29,21 @@ DB_PATH = str(Path(os.getenv("FLOWPI_DB_PATH", DATA_DIR / "flow.db")))
 # HTTP
 HOST = os.getenv("FLOWPI_HOST", "0.0.0.0")
 PORT = int(os.getenv("FLOWPI_PORT", "5000"))
-DEBUG = os.getenv("FLOWPI_DEBUG", "false").lower() in {"1", "true", "yes", "on"}
+DEBUG = _as_bool(os.getenv("FLOWPI_DEBUG"), default=False)
+ENV = os.getenv("FLOWPI_ENV", "development").lower()
+TRUST_PROXY = _as_bool(os.getenv("FLOWPI_TRUST_PROXY"), default=False)
+MAX_REQUEST_BYTES = int(os.getenv("FLOWPI_MAX_REQUEST_BYTES", str(64 * 1024)))
 
 # CORS
+DEFAULT_ALLOWED_ORIGINS = "http://localhost:8000,http://127.0.0.1:8000"
 ALLOWED_ORIGINS = [
-	origin.strip()
-	for origin in os.getenv("FLOWPI_ALLOWED_ORIGINS", "*").split(",")
-	if origin.strip()
+    origin.strip()
+    for origin in os.getenv("FLOWPI_ALLOWED_ORIGINS", DEFAULT_ALLOWED_ORIGINS).split(",")
+    if origin.strip()
 ]
 
 # Runtime
-ENABLE_GPIO = os.getenv("FLOWPI_ENABLE_GPIO", "true").lower() in {"1", "true", "yes", "on"}
+ENABLE_GPIO = _as_bool(os.getenv("FLOWPI_ENABLE_GPIO"), default=True)
 LOG_LEVEL = os.getenv("FLOWPI_LOG_LEVEL", "INFO").upper()
 
 # Admin

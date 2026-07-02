@@ -33,6 +33,26 @@ function setStatus(text) {
     }
 }
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function formatLogTime(timestamp) {
+    if (!timestamp) {
+        return "-";
+    }
+    const dt = new Date(String(timestamp).replace(" ", "T"));
+    if (Number.isNaN(dt.getTime())) {
+        return String(timestamp);
+    }
+    return dt.toLocaleString();
+}
+
 async function resolveApiBase() {
     if (apiBasePromise) {
         return apiBasePromise;
@@ -64,17 +84,21 @@ async function resolveApiBase() {
 
 async function fetchJson(path, options = {}) {
     const apiBase = await resolveApiBase();
+    const includeAuth = options.includeAuth !== false;
     const headers = {
         Accept: "application/json",
         ...(options.headers || {}),
     };
 
-    if (adminSessionToken) {
+    if (includeAuth && adminSessionToken) {
         headers["X-Admin-Session"] = adminSessionToken;
     }
 
+    const requestOptions = { ...options };
+    delete requestOptions.includeAuth;
+
     const response = await fetch(`${apiBase}${path}`, {
-        ...options,
+        ...requestOptions,
         headers,
     });
 
@@ -87,32 +111,80 @@ async function fetchJson(path, options = {}) {
 }
 
 function setLoggedInState(isLoggedIn) {
-    const loginCard = document.getElementById("loginCard");
     const editorCard = document.getElementById("editorCard");
+    const loginForm = document.getElementById("loginForm");
+    const sessionCard = document.getElementById("adminSessionCard");
+    const addUserForm = document.getElementById("addUserForm");
+    const refreshLogsBtn = document.getElementById("refreshLogsBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    if (loginCard) {
-        loginCard.classList.toggle("hidden", isLoggedIn);
+    if (loginForm) {
+        loginForm.classList.toggle("hidden", isLoggedIn);
+        loginForm.setAttribute("aria-hidden", String(isLoggedIn));
+    }
+
+    if (sessionCard) {
+        sessionCard.classList.toggle("hidden", !isLoggedIn);
+        sessionCard.setAttribute("aria-hidden", String(!isLoggedIn));
     }
 
     if (editorCard) {
-        editorCard.classList.toggle("hidden", !isLoggedIn);
+        editorCard.classList.remove("hidden");
+        editorCard.setAttribute("aria-hidden", "false");
+    }
+
+    if (addUserForm) {
+        addUserForm.classList.toggle("hidden", !isLoggedIn);
+    }
+
+    if (refreshLogsBtn) {
+        refreshLogsBtn.disabled = false;
+    }
+
+    if (logoutBtn) {
+        logoutBtn.disabled = !isLoggedIn;
     }
 
     setStatus(isLoggedIn ? "Admin session active" : "Please sign in");
 }
 
+function clearUsers() {
+    const container = document.getElementById("adminUsers");
+    if (!container) {
+        return;
+    }
+    container.innerHTML = '<div class="metric-sub">Sign in to manage users.</div>';
+}
+
+function clearSessionState(message = "Session expired, sign in again") {
+    adminSessionToken = "";
+    localStorage.removeItem("flowpi.adminSessionToken");
+    setLoggedInState(false);
+    clearUsers();
+    if (message) {
+        setStatus(message);
+    }
+}
+
+function clearFlowLogs() {
+    const body = document.getElementById("adminFlowLogsBody");
+    if (!body) {
+        return;
+    }
+    body.innerHTML = '<tr><td colspan="5" class="metric-sub">No flow events yet.</td></tr>';
+}
+
 async function checkSession() {
     if (!adminSessionToken) {
         setLoggedInState(false);
+        clearUsers();
         return false;
     }
 
     try {
         const session = await fetchJson("/admin/session", { method: "GET" });
         if (!session.authenticated) {
-            adminSessionToken = "";
-            localStorage.removeItem("flowpi.adminSessionToken");
-            setLoggedInState(false);
+            clearSessionState(null);
             return false;
         }
 
@@ -120,9 +192,54 @@ async function checkSession() {
         return true;
     } catch (error) {
         console.error("session check failed", error);
-        setLoggedInState(false);
+        clearSessionState("Unable to validate session");
         return false;
     }
+}
+
+async function loadFlowLogs() {
+    const body = document.getElementById("adminFlowLogsBody");
+    if (!body) {
+        return;
+    }
+
+    try {
+        const rows = await fetchJson("/flow_events?limit=120", { method: "GET", includeAuth: false });
+
+        if (!Array.isArray(rows) || rows.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" class="metric-sub">No flow events yet.</td></tr>';
+            return;
+        }
+
+        body.innerHTML = rows
+            .map((row) => {
+                const liters = (Number(row.ml || 0) / 1000).toFixed(3);
+                return `
+                    <tr>
+                        <td>#${Number(row.id || 0)}</td>
+                        <td>${escapeHtml(formatLogTime(row.timestamp))}</td>
+                        <td>${escapeHtml(row.user_name || "Unknown user")}</td>
+                        <td>${escapeHtml(row.event || "-")}</td>
+                        <td>${liters} L</td>
+                    </tr>
+                `;
+            })
+            .join("");
+    } catch (error) {
+        console.error("load flow logs failed", error);
+        body.innerHTML = '<tr><td colspan="5" class="metric-sub">Unable to load logs.</td></tr>';
+    }
+}
+
+function setupRefreshLogs() {
+    const button = document.getElementById("refreshLogsBtn");
+    if (!button) {
+        return;
+    }
+
+    button.onclick = async () => {
+        await loadFlowLogs();
+    };
 }
 
 function renderUsers(users) {
@@ -185,13 +302,11 @@ function renderUsers(users) {
 
                 setStatus(`Updated ${name}`);
                 await loadUsers();
+                await loadFlowLogs();
             } catch (error) {
                 console.error("volume update failed", error);
                 if (String(error.message).includes("403")) {
-                    adminSessionToken = "";
-                    localStorage.removeItem("flowpi.adminSessionToken");
-                    setLoggedInState(false);
-                    setStatus("Session expired, sign in again");
+                    clearSessionState();
                     return;
                 }
                 setStatus("Update failed");
@@ -208,13 +323,11 @@ function renderUsers(users) {
                 await fetchJson(`/admin/users/${user.id}`, { method: "DELETE" });
                 setStatus(`Deleted ${user.name}`);
                 await loadUsers();
+                await loadFlowLogs();
             } catch (error) {
                 console.error("delete user failed", error);
                 if (String(error.message).includes("403")) {
-                    adminSessionToken = "";
-                    localStorage.removeItem("flowpi.adminSessionToken");
-                    setLoggedInState(false);
-                    setStatus("Session expired, sign in again");
+                    clearSessionState();
                     return;
                 }
                 setStatus("Delete failed");
@@ -251,13 +364,11 @@ function setupAddUserForm() {
             input.value = "";
             setStatus(`Added ${name}`);
             await loadUsers();
+            await loadFlowLogs();
         } catch (error) {
             console.error("add user failed", error);
             if (String(error.message).includes("403")) {
-                adminSessionToken = "";
-                localStorage.removeItem("flowpi.adminSessionToken");
-                setLoggedInState(false);
-                setStatus("Session expired, sign in again");
+                clearSessionState();
                 return;
             }
             setStatus("Add user failed");
@@ -271,6 +382,10 @@ async function loadUsers() {
         renderUsers(users);
     } catch (error) {
         console.error("load users failed", error);
+        if (String(error.message).includes("403")) {
+            clearSessionState();
+            return;
+        }
         setStatus("Failed to load users");
     }
 }
@@ -283,12 +398,17 @@ function setupLoginForm() {
 
     form.onsubmit = async (event) => {
         event.preventDefault();
+        const loginBtn = document.getElementById("loginBtn");
+        if (loginBtn) {
+            loginBtn.disabled = true;
+        }
 
         const username = document.getElementById("adminUsername").value.trim();
         const password = document.getElementById("adminPassword").value;
 
         try {
             const response = await fetchJson("/admin/login", {
+                includeAuth: false,
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -306,6 +426,7 @@ function setupLoginForm() {
             setStatus("Signed in");
             form.reset();
             await loadUsers();
+            await loadFlowLogs();
         } catch (error) {
             console.error("login failed", error);
             const message = String(error.message || "");
@@ -314,6 +435,10 @@ function setupLoginForm() {
                 return;
             }
             setStatus("Login failed");
+        } finally {
+            if (loginBtn) {
+                loginBtn.disabled = false;
+            }
         }
     };
 }
@@ -334,6 +459,8 @@ function setupLogout() {
         adminSessionToken = "";
         localStorage.removeItem("flowpi.adminSessionToken");
         setLoggedInState(false);
+        clearUsers();
+        await loadFlowLogs();
     };
 }
 
@@ -341,6 +468,10 @@ async function init() {
     setupLoginForm();
     setupLogout();
     setupAddUserForm();
+    setupRefreshLogs();
+    clearUsers();
+    clearFlowLogs();
+    setLoggedInState(false);
 
     try {
         await resolveApiBase();
@@ -352,6 +483,7 @@ async function init() {
     }
 
     const authenticated = await checkSession();
+    await loadFlowLogs();
     if (authenticated) {
         await loadUsers();
     }
