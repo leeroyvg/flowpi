@@ -36,6 +36,38 @@ function getApiCandidates() {
 
 let apiBasePromise = null;
 
+function getStoredTheme() {
+    return localStorage.getItem("flowpi.theme") === "dark" ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
+
+    const toggle = document.getElementById("themeToggle");
+    if (toggle) {
+        const darkEnabled = theme === "dark";
+        toggle.innerText = darkEnabled ? "Theme: Dark" : "Theme: Light";
+        toggle.setAttribute("aria-pressed", String(darkEnabled));
+    }
+}
+
+function setupThemeToggle() {
+    const toggle = document.getElementById("themeToggle");
+    const currentTheme = getStoredTheme();
+    applyTheme(currentTheme);
+
+    if (!toggle) {
+        return;
+    }
+
+    toggle.onclick = () => {
+        const nextTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        localStorage.setItem("flowpi.theme", nextTheme);
+        applyTheme(nextTheme);
+    };
+}
+
 function setText(id, value) {
     const element = document.getElementById(id);
     if (element) {
@@ -260,4 +292,5 @@ async function loadStats() {
 }
 
 setInterval(loadStats, 3000);
+setupThemeToggle();
 void loadStats();

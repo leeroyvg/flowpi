@@ -8,9 +8,96 @@
     --primary-strong: #084c92;
     --accent: #0f9d7a;
     --danger: #c53b4a;
+    --hero-link-text: #ffffff;
+    --pill-bg: #eef6ff;
+    --pill-line: #cfe2fb;
+    --button-bg: #edf2f7;
+    --button-hover-bg: #dbe9f8;
+    --button-text: #2a3f5d;
+    --focus-ring: #91c4f6;
+    --scroll-thumb: #c1d5ea;
+    --scroll-track: #edf3fa;
+    --card-soft-border: #dce7f3;
+    --card-soft-bg: #f8fbff;
+    --name-bg-start: #1a7fe0;
+    --name-bg-end: #0b6ccf;
+    --name-text: #ffffff;
+    --rank-bg: #d9ecff;
+    --rank-text: #0a4f92;
+    --volume-bg-start: #d7edff;
+    --volume-bg-end: #c9e6ff;
+    --volume-text: #083664;
+    --input-bg: #f9fbfe;
+    --input-border: #c9d8ea;
+    --logs-wrap-bg: #ffffff;
+    --table-row-line: #edf3fa;
+    --table-head-bg: #f3f8ff;
+    --session-main-text: #1d3557;
+    --tap-open-line: #aee3d2;
+    --tap-open-bg: #f1fcf8;
+    --tap-closed-line: #cfe0f4;
+    --tap-closed-bg: #f5faff;
+    --row-bar-track: #dfeaf8;
+    --highlight-text: #2a3f5d;
+    --delete-bg: #f6dce0;
+    --delete-hover-bg: #efc9d0;
+    --delete-text: #7f2230;
+    --orb-a-start: #c8e6ff;
+    --orb-a-end: #92dcff;
+    --orb-b-start: #b0efd8;
+    --orb-b-end: #85dec5;
     --shadow: 0 14px 40px rgba(15, 39, 69, 0.12);
     --radius-lg: 20px;
     --radius-md: 14px;
+}
+
+:root[data-theme="dark"] {
+    --bg: #0b1626;
+    --bg-elevated: #112237;
+    --surface-line: #284562;
+    --text: #e7f0ff;
+    --text-soft: #a9bfd8;
+    --primary: #61b1ff;
+    --primary-strong: #4197e8;
+    --accent: #35c9a0;
+    --danger: #f07b89;
+    --pill-bg: #132a43;
+    --pill-line: #2f5a83;
+    --button-bg: #17304c;
+    --button-hover-bg: #1f3f62;
+    --button-text: #d7e8fb;
+    --focus-ring: #67b7ff;
+    --scroll-thumb: #385a7c;
+    --scroll-track: #1a314b;
+    --card-soft-border: #2a4867;
+    --card-soft-bg: #142b42;
+    --name-bg-start: #2f79c9;
+    --name-bg-end: #255e9c;
+    --rank-bg: #234463;
+    --rank-text: #9ad1ff;
+    --volume-bg-start: #1c3957;
+    --volume-bg-end: #1a314a;
+    --volume-text: #d9e9fb;
+    --input-bg: #13293f;
+    --input-border: #305170;
+    --logs-wrap-bg: #112237;
+    --table-row-line: #274664;
+    --table-head-bg: #18334e;
+    --session-main-text: #d9e9fb;
+    --tap-open-line: #2f7e68;
+    --tap-open-bg: #14392f;
+    --tap-closed-line: #3c678f;
+    --tap-closed-bg: #17324e;
+    --row-bar-track: #1f3b59;
+    --highlight-text: #d3e6fa;
+    --delete-bg: #4a2631;
+    --delete-hover-bg: #5a2f3c;
+    --delete-text: #ffb8c3;
+    --orb-a-start: #1d4674;
+    --orb-a-end: #163857;
+    --orb-b-start: #1d5b4b;
+    --orb-b-end: #15463a;
+    --shadow: 0 18px 44px rgba(3, 10, 18, 0.45);
 }
 
 * {
@@ -24,8 +111,8 @@ body {
     font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
     color: var(--text);
     background:
-        radial-gradient(45rem 22rem at 15% -10%, #d9ecff 0%, transparent 72%),
-        radial-gradient(35rem 22rem at 95% -20%, #c4f3e8 0%, transparent 70%),
+        radial-gradient(45rem 22rem at 15% -10%, color-mix(in srgb, var(--primary) 26%, transparent) 0%, transparent 72%),
+        radial-gradient(35rem 22rem at 95% -20%, color-mix(in srgb, var(--accent) 28%, transparent) 0%, transparent 70%),
         var(--bg);
 }
 
@@ -51,7 +138,7 @@ body {
     height: 220px;
     top: 14%;
     right: 6%;
-    background: linear-gradient(140deg, #c8e6ff, #92dcff);
+    background: linear-gradient(140deg, var(--orb-a-start), var(--orb-a-end));
 }
 
 .orb-b {
@@ -59,7 +146,7 @@ body {
     height: 180px;
     left: 8%;
     bottom: 12%;
-    background: linear-gradient(140deg, #b0efd8, #85dec5);
+    background: linear-gradient(140deg, var(--orb-b-start), var(--orb-b-end));
 }
 
 .card {
@@ -106,10 +193,16 @@ h1 {
     gap: 10px;
 }
 
+.hero-actions {
+    display: grid;
+    gap: 10px;
+    justify-items: end;
+}
+
 .admin-nav-link {
     display: inline-flex;
     text-decoration: none;
-    color: #ffffff;
+    color: var(--hero-link-text);
     background: var(--primary);
     border-radius: 10px;
     padding: 8px 12px;
@@ -135,9 +228,9 @@ h1 {
 .pill {
     white-space: nowrap;
     align-self: center;
-    background: #eef6ff;
+    background: var(--pill-bg);
     color: var(--primary-strong);
-    border: 1px solid #cfe2fb;
+    border: 1px solid var(--pill-line);
     border-radius: 999px;
     padding: 9px 14px;
     font-size: 0.86rem;
@@ -194,8 +287,8 @@ h2 {
 button {
     border: none;
     border-radius: 10px;
-    background: #edf2f7;
-    color: #2a3f5d;
+    background: var(--button-bg);
+    color: var(--button-text);
     padding: 10px 14px;
     font-family: inherit;
     font-weight: 600;
@@ -205,11 +298,11 @@ button {
 
 button:hover {
     transform: translateY(-1px);
-    background: #dbe9f8;
+    background: var(--button-hover-bg);
 }
 
 button:focus-visible {
-    outline: 3px solid #91c4f6;
+    outline: 3px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -233,12 +326,12 @@ button:focus-visible {
 }
 
 .user-grid::-webkit-scrollbar-thumb {
-    background: #c1d5ea;
+    background: var(--scroll-thumb);
     border-radius: 999px;
 }
 
 .user-grid::-webkit-scrollbar-track {
-    background: #edf3fa;
+    background: var(--scroll-track);
     border-radius: 999px;
 }
 
@@ -246,10 +339,10 @@ button:focus-visible {
     width: 100%;
     padding: 0;
     overflow: hidden;
-    border: 1px solid #dce7f3;
+    border: 1px solid var(--card-soft-border);
     border-radius: var(--radius-md);
     text-align: left;
-    background: #f8fbff;
+    background: var(--card-soft-bg);
     color: inherit;
     transition: transform 280ms ease, border-color 200ms ease, box-shadow 200ms ease;
     will-change: transform;
@@ -285,8 +378,8 @@ button:focus-visible {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #ffffff;
-    background: linear-gradient(130deg, #1a7fe0, #0b6ccf);
+    color: var(--name-text);
+    background: linear-gradient(130deg, var(--name-bg-start), var(--name-bg-end));
 }
 
 .user-rank {
@@ -294,13 +387,13 @@ button:focus-visible {
     padding: 3px 8px;
     font-size: 0.78rem;
     font-weight: 700;
-    background: #d9ecff;
-    color: #0a4f92;
+    background: var(--rank-bg);
+    color: var(--rank-text);
 }
 
 .user-volume {
-    color: #083664;
-    background: linear-gradient(130deg, #d7edff, #c9e6ff);
+    color: var(--volume-text);
+    background: linear-gradient(130deg, var(--volume-bg-start), var(--volume-bg-end));
     text-align: right;
 }
 
@@ -369,8 +462,8 @@ button:focus-visible {
 .admin-volume-input,
 .admin-name-input {
     width: 100%;
-    border: 1px solid #c9d8ea;
-    background: #f9fbfe;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
     border-radius: 10px;
     padding: 10px 12px;
     font-family: inherit;
@@ -381,7 +474,7 @@ button:focus-visible {
 .admin-form input:focus-visible,
 .admin-volume-input:focus-visible,
 .admin-name-input:focus-visible {
-    outline: 3px solid #91c4f6;
+    outline: 3px solid var(--focus-ring);
     outline-offset: 1px;
 }
 
@@ -409,8 +502,8 @@ button:focus-visible {
     grid-template-columns: minmax(110px, 1fr) minmax(90px, 130px) auto;
     padding: 8px;
     border-radius: 12px;
-    border: 1px solid #dce7f3;
-    background: #f8fbff;
+    border: 1px solid var(--card-soft-border);
+    background: var(--card-soft-bg);
 }
 
 .admin-name-input {
@@ -454,12 +547,12 @@ button:focus-visible {
 }
 
 .admin-delete-btn {
-    background: #f6dce0;
-    color: #7f2230;
+    background: var(--delete-bg);
+    color: var(--delete-text);
 }
 
 .admin-delete-btn:hover {
-    background: #efc9d0;
+    background: var(--delete-hover-bg);
 }
 
 .admin-logs-head {
@@ -475,9 +568,9 @@ button:focus-visible {
 .admin-logs-wrap {
     max-height: 520px;
     overflow: auto;
-    border: 1px solid #dce7f3;
+    border: 1px solid var(--card-soft-border);
     border-radius: 10px;
-    background: #ffffff;
+    background: var(--logs-wrap-bg);
 }
 
 .admin-logs-table {
@@ -489,7 +582,7 @@ button:focus-visible {
 .admin-logs-table th,
 .admin-logs-table td {
     padding: 8px 10px;
-    border-bottom: 1px solid #edf3fa;
+    border-bottom: 1px solid var(--table-row-line);
     text-align: left;
     white-space: nowrap;
 }
@@ -498,7 +591,7 @@ button:focus-visible {
     position: sticky;
     top: 0;
     z-index: 1;
-    background: #f3f8ff;
+    background: var(--table-head-bg);
     color: var(--text-soft);
     font-size: 0.8rem;
     letter-spacing: 0.03em;
@@ -518,15 +611,15 @@ button:focus-visible {
 }
 
 .tap-session-item {
-    border: 1px solid #dce7f3;
+    border: 1px solid var(--card-soft-border);
     border-radius: 12px;
-    background: #f8fbff;
+    background: var(--card-soft-bg);
     padding: 10px 12px;
 }
 
 .tap-session-main {
     font-weight: 700;
-    color: #1d3557;
+    color: var(--session-main-text);
 }
 
 .tap-session-meta {
@@ -536,13 +629,13 @@ button:focus-visible {
 }
 
 .tap-session-item.is-open {
-    border-color: #aee3d2;
-    background: #f1fcf8;
+    border-color: var(--tap-open-line);
+    background: var(--tap-open-bg);
 }
 
 .tap-session-item.is-closed {
-    border-color: #cfe0f4;
-    background: #f5faff;
+    border-color: var(--tap-closed-line);
+    background: var(--tap-closed-bg);
 }
 
 .tap-session-item.muted {
@@ -569,10 +662,10 @@ button:focus-visible {
 }
 
 .stats-row {
-    border: 1px solid #dce7f3;
+    border: 1px solid var(--card-soft-border);
     border-radius: 12px;
     padding: 10px 12px;
-    background: #f8fbff;
+    background: var(--card-soft-bg);
 }
 
 .stats-row-head {
@@ -585,8 +678,8 @@ button:focus-visible {
 
 .stats-row-rank {
     border-radius: 999px;
-    background: #d9ecff;
-    color: #0a4f92;
+    background: var(--rank-bg);
+    color: var(--rank-text);
     font-size: 0.78rem;
     font-weight: 700;
     padding: 4px 8px;
@@ -607,7 +700,7 @@ button:focus-visible {
     width: 100%;
     height: 10px;
     border-radius: 999px;
-    background: #dfeaf8;
+    background: var(--row-bar-track);
     overflow: hidden;
 }
 
@@ -625,13 +718,18 @@ button:focus-visible {
 }
 
 .stats-highlight-chip {
-    border: 1px solid #dce7f3;
+    border: 1px solid var(--card-soft-border);
     border-radius: 12px;
-    background: #f7fbff;
+    background: var(--card-soft-bg);
     padding: 10px 12px;
     font-size: 0.92rem;
-    color: #2a3f5d;
+    color: var(--highlight-text);
     font-weight: 600;
+}
+
+.theme-toggle {
+    align-self: center;
+    min-width: 118px;
 }
 
 @keyframes fade-up {
@@ -778,6 +876,11 @@ button:focus-visible {
 
     .pill {
         align-self: flex-start;
+    }
+
+    .hero-actions {
+        width: 100%;
+        justify-items: start;
     }
 
     .metrics-grid {
